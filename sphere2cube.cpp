@@ -1,5 +1,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <thread>
 
 #include "sphere2cube.h"
@@ -14,6 +16,13 @@ const float pi = M_PI;
 const float doub_pi = pi*2; 
 const float half_pi = pi/2.0;
 const float inv_pi = 1/pi;
+
+static int clamp_index(float v, int size){
+    int i = static_cast<int>(v);
+    if(i < 0) return 0;
+    if(i >= size) return size - 1;
+    return i;
+}
 
 Sphere2Cube::Sphere2Cube(int TILESIZE){
 
@@ -53,21 +62,23 @@ Sphere2Cube::Sphere2Cube(int TILESIZE){
     return;
 }
 
-void Sphere2Cube::transform(const cv::Mat& sphere_image, Faces& ret){
+void Sphere2Cube::transform(const Image& sphere_image, Faces& ret){
 
     std::thread prc[6];
 
     for(int lx = 0;lx < 6;lx++){
-        prc[lx] = std::thread([this, lx, sphere_image, &ret](){
-            int sphere_height = sphere_image.rows, sphere_width = sphere_image.cols;
-            ret.faces[lx].create(tile_size, tile_size, CV_8UC3);
+        prc[lx] = std::thread([this, lx, &sphere_image, &ret](){
+            int sphere_height = sphere_image.height, sphere_width = sphere_image.width;
+            ret.faces[lx].create(tile_size, tile_size);
             for(int tile_y = 0; tile_y < tile_size; tile_y++){
                 for(int tile_x = 0; tile_x < tile_size; tile_x++){
                     float theta, phi;
                     tie(theta, phi) = (this->face_func[lx])(*this, tile_y, tile_x);
-                    int sp_x = this->phi2width(sphere_width, phi);
-                    int sp_y = this->theta2height(sphere_height, theta);
-                    ret.faces[lx].at<cv::Vec3b>(tile_y, tile_x) = sphere_image.at<cv::Vec3b>(sp_y, sp_x);
+                    // Clamp: the angle mapping may land right on the far edge.
+                    int sp_x = clamp_index(this->phi2width(sphere_width, phi), sphere_width);
+                    int sp_y = clamp_index(this->theta2height(sphere_height, theta), sphere_height);
+                    memcpy(ret.faces[lx].at(tile_y, tile_x),
+                           sphere_image.at(sp_y, sp_x), Image::channels);
                 }
             }
         });

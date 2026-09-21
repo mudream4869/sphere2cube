@@ -1,12 +1,22 @@
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
 #include <chrono>
+#include <cstdio>
+
+#include "image.h"
 #include "sphere2cube.h"
 
 int main(int argc, char** argv){
+    if(argc < 2){
+        printf("Usage: %s [Panorama Filename]\n", argv[0]);
+        return 1;
+    }
+
+    Image image;
+    if(!image.load(argv[1])){
+        printf("Failed to load image: %s\n", argv[1]);
+        return 1;
+    }
+
     Sphere2Cube s2c(540);
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
     Faces cube;
 
     auto t1 = std::chrono::steady_clock::now();
@@ -15,12 +25,13 @@ int main(int argc, char** argv){
 
     printf("Cost %f s.\n", std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count());
 
-    cv::imwrite("up.jpg", cube.faces[0]);
-    cv::imwrite("front.jpg", cube.faces[1]);
-    cv::imwrite("right.jpg", cube.faces[2]);
-    cv::imwrite("back.jpg", cube.faces[3]);
-    cv::imwrite("left.jpg", cube.faces[4]);
-    cv::imwrite("down.jpg", cube.faces[5]);
+    const char* names[6] = {"up.jpg", "front.jpg", "right.jpg", "back.jpg", "left.jpg", "down.jpg"};
+    for(int lx = 0; lx < 6; lx++){
+        if(!cube.faces[lx].save_jpg(names[lx])){
+            printf("Failed to write image: %s\n", names[lx]);
+            return 1;
+        }
+    }
 
     return 0;
 }

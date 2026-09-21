@@ -6,8 +6,11 @@ Migrate from a [python version](https://github.com/flash286/sphere2cube).
 
 ## Requirement
 
-* opencv2
 * cmake
+* A C++11 compiler
+
+Image IO uses [stb_image / stb_image_write](https://github.com/nothings/stb),
+vendored in `third_party/stb`, so there is no external library to install.
 
 ## Compiler and Run
 
@@ -32,5 +35,4 @@ See `main.cpp`
 
 ## TODO
 
-* Remove opencv2
 * Remove cmake
