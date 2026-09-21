@@ -5,17 +5,17 @@
 #include <utility>
 #include <functional>
 
-#include <opencv2/core/core.hpp>
+#include "image.h"
 
 struct Faces{
-    cv::Mat faces[6]; 
-}; 
+    Image faces[6];
+};
 
 class Sphere2Cube{
 public:
     Sphere2Cube(int TILESIZE);
 
-    void transform(const cv::Mat& sphere_image, Faces& ret);
+    void transform(const Image& sphere_image, Faces& ret);
 
 private:
     typedef std::pair<float, float> vec2f;
