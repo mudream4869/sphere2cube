@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <exception>
 #include <thread>
 
 #include "sphere2cube.h"
@@ -65,27 +66,47 @@ Sphere2Cube::Sphere2Cube(int TILESIZE){
 void Sphere2Cube::transform(const Image& sphere_image, Faces& ret){
 
     std::thread prc[6];
+    std::exception_ptr errs[6];
+
+    // 任何路徑都要 join：joinable 的 thread 被解構會直接 terminate。
+    struct Joiner{
+        std::thread* prc;
+        ~Joiner(){
+            for(int lx = 0;lx < 6;lx++)
+                if(prc[lx].joinable())
+                    prc[lx].join();
+        }
+    } joiner{prc};
 
     for(int lx = 0;lx < 6;lx++){
-        prc[lx] = std::thread([this, lx, &sphere_image, &ret](){
-            int sphere_height = sphere_image.height, sphere_width = sphere_image.width;
-            ret.faces[lx].create(tile_size, tile_size);
-            for(int tile_y = 0; tile_y < tile_size; tile_y++){
-                for(int tile_x = 0; tile_x < tile_size; tile_x++){
-                    float theta, phi;
-                    tie(theta, phi) = (this->face_func[lx])(*this, tile_y, tile_x);
-                    // Clamp: the angle mapping may land right on the far edge.
-                    int sp_x = clamp_index(this->phi2width(sphere_width, phi), sphere_width);
-                    int sp_y = clamp_index(this->theta2height(sphere_height, theta), sphere_height);
-                    memcpy(ret.faces[lx].at(tile_y, tile_x),
-                           sphere_image.at(sp_y, sp_x), Image::channels);
+        prc[lx] = std::thread([this, lx, &sphere_image, &ret, &errs](){
+            // 例外不能逸出 thread 函式，先存起來交給主執行緒。
+            try{
+                int sphere_height = sphere_image.height, sphere_width = sphere_image.width;
+                ret.faces[lx].create(tile_size, tile_size);
+                for(int tile_y = 0; tile_y < tile_size; tile_y++){
+                    for(int tile_x = 0; tile_x < tile_size; tile_x++){
+                        float theta, phi;
+                        tie(theta, phi) = (this->face_func[lx])(*this, tile_y, tile_x);
+                        // Clamp: the angle mapping may land right on the far edge.
+                        int sp_x = clamp_index(this->phi2width(sphere_width, phi), sphere_width);
+                        int sp_y = clamp_index(this->theta2height(sphere_height, theta), sphere_height);
+                        memcpy(ret.faces[lx].at(tile_y, tile_x),
+                               sphere_image.at(sp_y, sp_x), Image::channels);
+                    }
                 }
+            }catch(...){
+                errs[lx] = std::current_exception();
             }
         });
     }
 
     for(int lx = 0;lx < 6;lx++)
         prc[lx].join();
+
+    for(int lx = 0;lx < 6;lx++)
+        if(errs[lx])
+            std::rethrow_exception(errs[lx]);
 
     return;
 }

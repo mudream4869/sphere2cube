@@ -1,5 +1,7 @@
 #include "image.h"
 
+#include <memory>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -7,22 +9,27 @@
 #include "stb_image_write.h"
 
 void Image::create(int w, int h){
+    // 先配置暫存，成功才 swap，失敗時本物件維持原狀。
+    std::vector<unsigned char> buf(static_cast<size_t>(w)*h*channels, 0);
+    data.swap(buf);
     width = w;
     height = h;
-    data.assign(static_cast<size_t>(w)*h*channels, 0);
 }
 
 bool Image::load(const char* filename){
     int w, h, comp;
     // Force 3 channels, so gray/alpha inputs are handled too.
-    unsigned char* pixels = stbi_load(filename, &w, &h, &comp, channels);
+    // RAII：即使下面 throw 也不會漏掉 stb 的 buffer。
+    std::unique_ptr<unsigned char, void(*)(void*)> pixels(
+        stbi_load(filename, &w, &h, &comp, channels), stbi_image_free);
     if(pixels == nullptr)
         return false;
 
+    std::vector<unsigned char> buf(pixels.get(),
+                                   pixels.get() + static_cast<size_t>(w)*h*channels);
+    data.swap(buf);
     width = w;
     height = h;
-    data.assign(pixels, pixels + static_cast<size_t>(w)*h*channels);
-    stbi_image_free(pixels);
     return true;
 }
 
