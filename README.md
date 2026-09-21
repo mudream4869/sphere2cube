@@ -6,7 +6,6 @@ Migrate from a [python version](https://github.com/flash286/sphere2cube).
 
 ## Requirement
 
-* cmake
 * A C++11 compiler
 
 Image IO uses [stb_image / stb_image_write](https://github.com/nothings/stb),
@@ -17,10 +16,13 @@ vendored in `third_party/stb`, so there is no external library to install.
 ### Compile
 
 ```
-mkdir build
-cd build
-cmake ..
 make
+```
+
+Or without `make`:
+
+```
+g++ -O2 -std=c++11 -pthread -Ithird_party/stb *.cpp -o main
 ```
 
 ### Run
@@ -33,6 +35,3 @@ make
 
 See `main.cpp`
 
-## TODO
-
-* Remove cmake
