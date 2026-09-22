@@ -12,7 +12,8 @@ namespace sphere2cube {
 struct Image {
     static const int channels = 3;
 
-    int width = 0, height = 0;
+    int width = 0;
+    int height = 0;
     std::vector<unsigned char> data;
 
     void create(int w, int h);
@@ -21,11 +22,11 @@ struct Image {
     bool saveJPG(const char* filename, int quality = 90) const;
 
     unsigned char* at(int y, int x) {
-        return &data[(static_cast<size_t>(y)*width + x)*channels];
+        return &data[(static_cast<size_t>(y) * width + x) * channels];
     }
 
     const unsigned char* at(int y, int x) const {
-        return &data[(static_cast<size_t>(y)*width + x)*channels];
+        return &data[(static_cast<size_t>(y) * width + x) * channels];
     }
 };
 
