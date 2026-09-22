@@ -1,6 +1,7 @@
 #include <mukyu/sphere2cube/image.hpp>
 
 #include <memory>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -29,15 +30,17 @@ bool Image::load(const char* filename) {
         return false;
     }
 
-    std::vector<unsigned char> buf(pixels.get(),
-                                   pixels.get() + static_cast<size_t>(w)*h*channels);
+    std::vector<unsigned char> buf(
+        pixels.get(),
+        pixels.get() + static_cast<size_t>(w) * h * channels);
+
     data.swap(buf);
     width = w;
     height = h;
     return true;
 }
 
-bool Image::save_jpg(const char* filename, int quality) const {
+bool Image::saveJPG(const char* filename, int quality) const {
     if (data.empty()) {
         return false;
     }

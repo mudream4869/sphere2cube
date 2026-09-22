@@ -18,7 +18,7 @@ struct Image {
     void create(int w, int h);
 
     bool load(const char* filename);
-    bool save_jpg(const char* filename, int quality = 90) const;
+    bool saveJPG(const char* filename, int quality = 90) const;
 
     unsigned char* at(int y, int x) {
         return &data[(static_cast<size_t>(y)*width + x)*channels];

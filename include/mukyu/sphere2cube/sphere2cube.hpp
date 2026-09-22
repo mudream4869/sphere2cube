@@ -18,36 +18,33 @@ struct Faces {
 
 class Sphere2Cube {
 public:
-    Sphere2Cube(int TILESIZE);
+    Sphere2Cube(int tileSize);
 
-    void transform(const Image& sphere_image, Faces& ret);
+    void transform(const Image& sphereImage, Faces& ret);
 
 private:
     typedef std::pair<float, float> vec2f;
     typedef std::vector<float> VF;
     typedef std::vector<VF> VVF;
 
-    int tile_size;
-    float half_size, inv_half_size;
+    int tileSize_;
+    float halfSize, invHalfSize;
 
-    VVF cache_zp, cache_zm, cache_xypm, cache_phi;
+    VVF cacheZp, cacheZm, cacheXypm, cachePhi;
 
-    std::function<vec2f(Sphere2Cube&, int,int)> face_func[6];
+    std::function<vec2f(Sphere2Cube&, int, int)> faceFunc[6];
 
-    float update_phi(float phi,
-                     int major_dir, int minor_dir,
-                     float major_m, float major_p,
-                     float minor_m, float minor_p) const;
+    float updatePhi(float phi,
+                     int majorDir, int minorDir,
+                     float majorM, float majorP,
+                     float minorM, float minorP) const;
 
-    vec2f func_up(int tile_y, int tile_x);
-    vec2f func_front(int tile_y, int tile_x);
-    vec2f func_right(int tile_y, int tile_x);
-    vec2f func_back(int tile_y, int tile_x);
-    vec2f func_left(int tile_y, int tile_x);
-    vec2f func_down(int tile_y, int tile_x);
-
-    float phi2width(int width, float phi) const;
-    float theta2height(int height, float theta) const;
+    vec2f funcUp(int tile_y, int tile_x);
+    vec2f funcFront(int tile_y, int tile_x);
+    vec2f funcRight(int tile_y, int tile_x);
+    vec2f funcBack(int tile_y, int tile_x);
+    vec2f funcLeft(int tile_y, int tile_x);
+    vec2f funcDown(int tile_y, int tile_x);
 };
 
 

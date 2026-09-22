@@ -36,7 +36,7 @@ static int run(int argc, char** argv) {
 
     const char* names[6] = {"up.jpg", "front.jpg", "right.jpg", "back.jpg", "left.jpg", "down.jpg"};
     for (int lx = 0; lx < 6; lx++) {
-        if (!cube.faces[lx].save_jpg(names[lx])) {
+        if (!cube.faces[lx].saveJPG(names[lx])) {
             std::cerr << "Failed to write image: " << names[lx] << "\n";
             return 1;
         }

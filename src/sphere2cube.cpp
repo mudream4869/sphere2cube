@@ -1,23 +1,25 @@
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <cstring>
+#include <mukyu/sphere2cube/sphere2cube.hpp>
+
 #include <exception>
 #include <iostream>
 #include <thread>
 
-#include <mukyu/sphere2cube/sphere2cube.hpp>
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <cstring>
 
 
-using std::tie;
+
+namespace {
 
 
-const float pi = M_PI; 
-const float doub_pi = pi*2; 
-const float half_pi = pi/2.0;
-const float inv_pi = 1/pi;
+const float pi = M_PI;
+const float doubPI = pi * 2;
+const float halfPI = pi / 2.0;
+const float invPI = 1 / pi;
 
 
-static int clamp_index(float v, int size) {
+static int clampIndex(float v, int size) {
     int i = static_cast<int>(v);
     if (i < 0) {
         return 0;
@@ -28,45 +30,63 @@ static int clamp_index(float v, int size) {
     return i;
 }
 
+float phi2Width(int width, float phi) {
+    float x = 0.5 * width * (phi * invPI + 1);
+    if (x < 1) {
+        return x + width;
+    } else if (x > width) {
+        return x - width;
+    } else {
+        return x;
+    }
+}
+
+float theta2Height(int height, float theta) {
+    return height * theta * invPI;
+}
+
+
+}
+
+
 namespace mukyu {
 namespace sphere2cube {
 
 
-Sphere2Cube::Sphere2Cube(int TILESIZE) {
-
-    tile_size = TILESIZE;
-    half_size = (TILESIZE - 1.0) / 2;
-    inv_half_size = 1/half_size;
+Sphere2Cube::Sphere2Cube(int tileSize) {
+    tileSize_ = tileSize;
+    halfSize = (tileSize - 1.0) / 2;
+    invHalfSize = 1 / halfSize;
 
     std::cout << "Sphere2Cube : Perform cache angles...\n";
 
-    cache_zp = VVF(TILESIZE, VF(TILESIZE));
-    cache_zm = VVF(TILESIZE, VF(TILESIZE));
-    cache_xypm = VVF(TILESIZE, VF(TILESIZE));
-    cache_phi = VVF(TILESIZE, VF(TILESIZE));
+    cacheZp = VVF(tileSize, VF(tileSize));
+    cacheZm = VVF(tileSize, VF(tileSize));
+    cacheXypm = VVF(tileSize, VF(tileSize));
+    cachePhi = VVF(tileSize, VF(tileSize));
 
-    for (int tile_y = 0; tile_y < tile_size; tile_y++) {
-        float y = tile_y*inv_half_size - 1;
-        for (int tile_x = 0; tile_x < tile_size; tile_x++) {
-            float x = tile_x*inv_half_size - 1;
-            float inv_r = 1/sqrt(x*x + y*y + 1);
-            cache_zp[tile_y][tile_x] = acos(inv_r);
-            cache_zm[tile_y][tile_x] = acos(-inv_r);
-            cache_xypm[tile_y][tile_x] = acos(y*inv_r);
+    for (int tileY = 0; tileY < tileSize; tileY++) {
+        float y = tileY*invHalfSize - 1;
+        for (int tileX = 0; tileX < tileSize; tileX++) {
+            float x = tileX * invHalfSize - 1;
+            float invR = 1 / sqrt(x * x + y * y + 1);
+            cacheZp[tileY][tileX] = acos(invR);
+            cacheZm[tileY][tileX] = acos(-invR);
+            cacheXypm[tileY][tileX] = acos(y * invR);
             if (x != 0) {
-                cache_phi[tile_y][tile_x] = atan(y/x);
+                cachePhi[tileY][tileX] = atan(y / x);
             }
         }
     }
 
     std::cout << "Sphere2Cube : Perform cache angles ok.\n";
 
-    face_func[0] = &Sphere2Cube::func_up;
-    face_func[1] = &Sphere2Cube::func_front;
-    face_func[2] = &Sphere2Cube::func_right;
-    face_func[3] = &Sphere2Cube::func_back;
-    face_func[4] = &Sphere2Cube::func_left;
-    face_func[5] = &Sphere2Cube::func_down;
+    faceFunc[0] = &Sphere2Cube::funcUp;
+    faceFunc[1] = &Sphere2Cube::funcFront;
+    faceFunc[2] = &Sphere2Cube::funcRight;
+    faceFunc[3] = &Sphere2Cube::funcBack;
+    faceFunc[4] = &Sphere2Cube::funcLeft;
+    faceFunc[5] = &Sphere2Cube::funcDown;
 
     return;
 }
@@ -89,16 +109,15 @@ void Sphere2Cube::transform(const Image& sphere_image, Faces& ret) {
     for (int lx = 0; lx < 6; lx++) {
         prc[lx] = std::thread([this, lx, &sphere_image, &ret, &errs]() {
             try {
-                int sphere_height = sphere_image.height, sphere_width = sphere_image.width;
-                ret.faces[lx].create(tile_size, tile_size);
-                for (int tile_y = 0; tile_y < tile_size; tile_y++) {
-                    for (int tile_x = 0; tile_x < tile_size; tile_x++) {
-                        float theta, phi;
-                        tie(theta, phi) = (this->face_func[lx])(*this, tile_y, tile_x);
-                        // Clamp: the angle mapping may land right on the far edge.
-                        int sp_x = clamp_index(this->phi2width(sphere_width, phi), sphere_width);
-                        int sp_y = clamp_index(this->theta2height(sphere_height, theta), sphere_height);
-                        memcpy(ret.faces[lx].at(tile_y, tile_x),
+                int sphere_height = sphere_image.height;
+                int sphere_width = sphere_image.width;
+                ret.faces[lx].create(tileSize_, tileSize_);
+                for (int tileY = 0; tileY < tileSize_; tileY++) {
+                    for (int tileX = 0; tileX < tileSize_; tileX++) {
+                        auto [theta, phi] = (this->faceFunc[lx])(*this, tileY, tileX);
+                        int sp_x = clampIndex(phi2Width(sphere_width, phi), sphere_width);
+                        int sp_y = clampIndex(theta2Height(sphere_height, theta), sphere_height);
+                        memcpy(ret.faces[lx].at(tileY, tileX),
                                sphere_image.at(sp_y, sp_x), Image::channels);
                     }
                 }
@@ -121,85 +140,69 @@ void Sphere2Cube::transform(const Image& sphere_image, Faces& ret) {
     return;
 }
 
-float Sphere2Cube::update_phi(float phi,
+float Sphere2Cube::updatePhi(float phi,
                               int major_dir, int minor_dir,
                               float major_m, float major_p,
                               float minor_m, float minor_p) const {
-    if (major_dir < half_size) {
+    if (major_dir < halfSize) {
         return phi + major_m;
-    } else if (major_dir > half_size) {
+    } else if (major_dir > halfSize) {
         return phi + major_p;
-    } else if (minor_dir < half_size) {
+    } else if (minor_dir < halfSize) {
         return minor_m;
     } else {
         return minor_p;
     }
 }
 
-Sphere2Cube::vec2f Sphere2Cube::func_up(int tile_y, int tile_x) {
-    float theta = cache_zp[tile_y][tile_x];
-    float phi = cache_phi[tile_x][tile_y];
-    phi = update_phi(phi, tile_y, tile_x, pi, 0, -half_pi, half_pi);
+Sphere2Cube::vec2f Sphere2Cube::funcUp(int tileY, int tileX) {
+    float theta = cacheZp[tileY][tileX];
+    float phi = cachePhi[tileX][tileY];
+    phi = updatePhi(phi, tileY, tileX, pi, 0, -halfPI, halfPI);
     return vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::func_front(int tile_y, int tile_x) {
-    float theta = cache_xypm[tile_size - tile_y - 1][tile_size - tile_x - 1];
-    float phi = cache_phi[tile_x][tile_size - 1];
-    phi = update_phi(phi, tile_y, tile_x, 0, 0, -half_pi, half_pi);
+Sphere2Cube::vec2f Sphere2Cube::funcFront(int tileY, int tileX) {
+    float theta = cacheXypm[tileSize_ - tileY - 1][tileSize_ - tileX - 1];
+    float phi = cachePhi[tileX][tileSize_ - 1];
+    phi = updatePhi(phi, tileY, tileX, 0, 0, -halfPI, halfPI);
     return vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::func_right(int tile_y, int tile_x) {
-    float theta, phi;
-    tie(theta, phi) = func_front(tile_y, tile_x);
-    phi += half_pi;
-    if (phi > doub_pi) {
-        phi -= doub_pi;
+Sphere2Cube::vec2f Sphere2Cube::funcRight(int tileY, int tileX) {
+    auto [theta, phi] = funcFront(tileY, tileX);
+    phi += halfPI;
+    if (phi > doubPI) {
+        phi -= doubPI;
     }
     return vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::func_back(int tile_y, int tile_x) {
-    float theta, phi;
-    tie(theta, phi) = func_front(tile_y, tile_x);
-    phi += 2*half_pi;
-    if (phi > doub_pi) {
-        phi -= doub_pi;
+Sphere2Cube::vec2f Sphere2Cube::funcBack(int tileY, int tileX) {
+    auto [theta, phi] = funcFront(tileY, tileX);
+    phi += 2*halfPI;
+    if (phi > doubPI) {
+        phi -= doubPI;
     }
     return vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::func_left(int tile_y, int tile_x) {
-    auto [theta, phi] = func_front(tile_y, tile_x);
-    phi += 3*half_pi;
-    if (phi > doub_pi) {
-        phi -= doub_pi;
+Sphere2Cube::vec2f Sphere2Cube::funcLeft(int tileY, int tileX) {
+    auto [theta, phi] = funcFront(tileY, tileX);
+    phi += 3*halfPI;
+    if (phi > doubPI) {
+        phi -= doubPI;
     }
     return vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::func_down(int tile_y, int tile_x) {
-    float theta = cache_zm[tile_y][tile_x];
-    float phi = cache_phi[tile_x][tile_size - tile_y - 1];
-    phi = update_phi(phi, tile_y, tile_x, 0, pi, -half_pi, half_pi);
+Sphere2Cube::vec2f Sphere2Cube::funcDown(int tileY, int tileX) {
+    float theta = cacheZm[tileY][tileX];
+    float phi = cachePhi[tileX][tileSize_ - tileY - 1];
+    phi = updatePhi(phi, tileY, tileX, 0, pi, -halfPI, halfPI);
     return vec2f(theta, phi);
 }
 
-float Sphere2Cube::phi2width(int width, float phi) const {
-    float x = 0.5 * width*(phi*inv_pi + 1);
-    if (x < 1) {
-        return x + width;
-    } else if (x > width) {
-        return x - width;
-    } else {
-        return x;
-    }
-}
-
-float Sphere2Cube::theta2height(int height, float theta) const {
-    return height * theta * inv_pi;
-}
 
 
 } // namespace sphere2cube
