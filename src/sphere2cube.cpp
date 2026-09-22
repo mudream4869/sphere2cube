@@ -73,8 +73,6 @@ Sphere2Cube::Sphere2Cube(int tileSize) {
     halfSize = (tileSize - 1.0) / 2;
     invHalfSize = 1 / halfSize;
 
-    std::cout << "Sphere2Cube : Perform cache angles...\n";
-
     cacheZp = VVF(tileSize, VF(tileSize));
     cacheZm = VVF(tileSize, VF(tileSize));
     cacheXypm = VVF(tileSize, VF(tileSize));
@@ -93,20 +91,9 @@ Sphere2Cube::Sphere2Cube(int tileSize) {
             }
         }
     }
-
-    std::cout << "Sphere2Cube : Perform cache angles ok.\n";
-
-    faceFunc[0] = &Sphere2Cube::funcUp;
-    faceFunc[1] = &Sphere2Cube::funcFront;
-    faceFunc[2] = &Sphere2Cube::funcRight;
-    faceFunc[3] = &Sphere2Cube::funcBack;
-    faceFunc[4] = &Sphere2Cube::funcLeft;
-    faceFunc[5] = &Sphere2Cube::funcDown;
-
-    return;
 }
 
-void Sphere2Cube::transform(const Image& sphere_image, Faces& ret) {
+void Sphere2Cube::transform(const Image& img, Faces& ret) {
     std::thread prc[6];
     std::exception_ptr errs[6];
 
@@ -121,19 +108,29 @@ void Sphere2Cube::transform(const Image& sphere_image, Faces& ret) {
         }
     } joiner{prc};
 
+    std::vector<std::function<Sphere2Cube::vec2f(Sphere2Cube &, int, int)>>
+        faceFuncVec {
+            &Sphere2Cube::funcUp,
+            &Sphere2Cube::funcFront,
+            &Sphere2Cube::funcRight,
+            &Sphere2Cube::funcBack,
+            &Sphere2Cube::funcLeft,
+            &Sphere2Cube::funcDown
+        };
+
     for (int lx = 0; lx < 6; lx++) {
-        prc[lx] = std::thread([this, lx, &sphere_image, &ret, &errs]() {
+        prc[lx] = std::thread([this, lx, &img, &ret, &errs, &faceFuncVec]() {
             try {
-                int sphere_height = sphere_image.height;
-                int sphere_width = sphere_image.width;
+                int height = img.height;
+                int width = img.width;
                 ret.faces[lx].create(tileSize_, tileSize_);
                 for (int tileY = 0; tileY < tileSize_; tileY++) {
                     for (int tileX = 0; tileX < tileSize_; tileX++) {
-                        auto [theta, phi] = (this->faceFunc[lx])(*this, tileY, tileX);
-                        int sp_x = clampIndex(phi2Width(sphere_width, phi), sphere_width);
-                        int sp_y = clampIndex(theta2Height(sphere_height, theta), sphere_height);
+                        auto [theta, phi] = (faceFuncVec[lx])(*this, tileY, tileX);
+                        int sp_x = clampIndex(phi2Width(width, phi), width);
+                        int sp_y = clampIndex(theta2Height(height, theta), height);
                         memcpy(ret.faces[lx].at(tileY, tileX),
-                               sphere_image.at(sp_y, sp_x), Image::channels);
+                               img.at(sp_y, sp_x), Image::channels);
                     }
                 }
             } catch (...) {

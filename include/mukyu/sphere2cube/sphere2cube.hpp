@@ -32,8 +32,6 @@ private:
 
     VVF cacheZp, cacheZm, cacheXypm, cachePhi;
 
-    std::function<vec2f(Sphere2Cube&, int, int)> faceFunc[6];
-
     vec2f funcUp(int tile_y, int tile_x);
     vec2f funcFront(int tile_y, int tile_x);
     vec2f funcRight(int tile_y, int tile_x);
