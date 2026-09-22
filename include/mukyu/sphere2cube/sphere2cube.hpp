@@ -34,11 +34,6 @@ private:
 
     std::function<vec2f(Sphere2Cube&, int, int)> faceFunc[6];
 
-    float updatePhi(float phi,
-                     int majorDir, int minorDir,
-                     float majorM, float majorP,
-                     float minorM, float minorP) const;
-
     vec2f funcUp(int tile_y, int tile_x);
     vec2f funcFront(int tile_y, int tile_x);
     vec2f funcRight(int tile_y, int tile_x);

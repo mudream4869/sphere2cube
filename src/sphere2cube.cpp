@@ -45,6 +45,21 @@ float theta2Height(int height, float theta) {
     return height * theta * invPI;
 }
 
+float updatePhi(float phi, float halfSize,
+                int majorDir, int minorDir,
+                float majorM, float majorP,
+                float minorM, float minorP) {
+    if (majorDir < halfSize) {
+        return phi + majorM;
+    } else if (majorDir > halfSize) {
+        return phi + majorP;
+    } else if (minorDir < halfSize) {
+        return minorM;
+    } else {
+        return minorP;
+    }
+}
+
 
 }
 
@@ -140,32 +155,17 @@ void Sphere2Cube::transform(const Image& sphere_image, Faces& ret) {
     return;
 }
 
-float Sphere2Cube::updatePhi(float phi,
-                              int major_dir, int minor_dir,
-                              float major_m, float major_p,
-                              float minor_m, float minor_p) const {
-    if (major_dir < halfSize) {
-        return phi + major_m;
-    } else if (major_dir > halfSize) {
-        return phi + major_p;
-    } else if (minor_dir < halfSize) {
-        return minor_m;
-    } else {
-        return minor_p;
-    }
-}
-
 Sphere2Cube::vec2f Sphere2Cube::funcUp(int tileY, int tileX) {
     float theta = cacheZp[tileY][tileX];
     float phi = cachePhi[tileX][tileY];
-    phi = updatePhi(phi, tileY, tileX, pi, 0, -halfPI, halfPI);
+    phi = updatePhi(phi, halfSize, tileY, tileX, pi, 0, -halfPI, halfPI);
     return vec2f(theta, phi);
 }
 
 Sphere2Cube::vec2f Sphere2Cube::funcFront(int tileY, int tileX) {
     float theta = cacheXypm[tileSize_ - tileY - 1][tileSize_ - tileX - 1];
     float phi = cachePhi[tileX][tileSize_ - 1];
-    phi = updatePhi(phi, tileY, tileX, 0, 0, -halfPI, halfPI);
+    phi = updatePhi(phi, halfSize, tileY, tileX, 0, 0, -halfPI, halfPI);
     return vec2f(theta, phi);
 }
 
@@ -199,7 +199,7 @@ Sphere2Cube::vec2f Sphere2Cube::funcLeft(int tileY, int tileX) {
 Sphere2Cube::vec2f Sphere2Cube::funcDown(int tileY, int tileX) {
     float theta = cacheZm[tileY][tileX];
     float phi = cachePhi[tileX][tileSize_ - tileY - 1];
-    phi = updatePhi(phi, tileY, tileX, 0, pi, -halfPI, halfPI);
+    phi = updatePhi(phi, halfSize, tileY, tileX, 0, pi, -halfPI, halfPI);
     return vec2f(theta, phi);
 }
 
