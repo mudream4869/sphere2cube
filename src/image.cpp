@@ -1,10 +1,10 @@
 #include <mukyu/sphere2cube/image.hpp>
 
-#include <memory>
-#include <vector>
-
 #include <stb_image.h>
 #include <stb_image_write.h>
+
+#include <memory>
+#include <vector>
 
 
 namespace mukyu {
