@@ -23,20 +23,23 @@ public:
     void transform(const Image& img, Faces& ret);
 
 private:
-    typedef std::pair<float, float> vec2f;
+    typedef std::pair<float, float> Vec2f;
 
     int tileSize_;
     float halfSize_;
     float invHalfSize_;
 
-    std::vector<std::vector<float>> cacheZp, cacheZm, cacheXypm, cachePhi;
+    std::vector<std::vector<float>> cacheZp_;
+    std::vector<std::vector<float>> cacheZm_;
+    std::vector<std::vector<float>> cacheXypm_;
+    std::vector<std::vector<float>> cachePhi_;
 
-    vec2f funcUp(int tile_y, int tile_x);
-    vec2f funcFront(int tile_y, int tile_x);
-    vec2f funcRight(int tile_y, int tile_x);
-    vec2f funcBack(int tile_y, int tile_x);
-    vec2f funcLeft(int tile_y, int tile_x);
-    vec2f funcDown(int tile_y, int tile_x);
+    Vec2f funcUp(int tileY, int tileX);
+    Vec2f funcFront(int tileY, int tileX);
+    Vec2f funcRight(int tileY, int tileX);
+    Vec2f funcBack(int tileY, int tileX);
+    Vec2f funcLeft(int tileY, int tileX);
+    Vec2f funcDown(int tileY, int tileX);
 };
 
 

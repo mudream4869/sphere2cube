@@ -71,22 +71,22 @@ Sphere2Cube::Sphere2Cube(int tileSize) {
     halfSize_ = (tileSize - 1.0) / 2;
     invHalfSize_ = 1 / halfSize_;
 
-    cacheZp = std::vector<std::vector<float>>(
+    cacheZp_ = std::vector<std::vector<float>>(
         tileSize, std::vector<float>(tileSize));
-    cacheZm = cacheZp;
-    cacheXypm = cacheZp;
-    cachePhi = cacheZp;
+    cacheZm_ = cacheZp_;
+    cacheXypm_ = cacheZp_;
+    cachePhi_ = cacheZp_;
 
     for (int tileY = 0; tileY < tileSize; tileY++) {
         float y = tileY * invHalfSize_ - 1;
         for (int tileX = 0; tileX < tileSize; tileX++) {
             float x = tileX * invHalfSize_ - 1;
             float invR = 1 / sqrt(x * x + y * y + 1);
-            cacheZp[tileY][tileX] = acos(invR);
-            cacheZm[tileY][tileX] = acos(-invR);
-            cacheXypm[tileY][tileX] = acos(y * invR);
+            cacheZp_[tileY][tileX] = acos(invR);
+            cacheZm_[tileY][tileX] = acos(-invR);
+            cacheXypm_[tileY][tileX] = acos(y * invR);
             if (x != 0) {
-                cachePhi[tileY][tileX] = atan(y / x);
+                cachePhi_[tileY][tileX] = atan(y / x);
             }
         }
     }
@@ -107,8 +107,8 @@ void Sphere2Cube::transform(const Image& img, Faces& ret) {
         }
     } joiner{prc};
 
-    std::vector<std::function<Sphere2Cube::vec2f(Sphere2Cube &, int, int)>>
-        faceFuncVec {
+    std::vector<std::function<Sphere2Cube::Vec2f(Sphere2Cube &, int, int)>>
+        faceFuncs {
             &Sphere2Cube::funcUp,
             &Sphere2Cube::funcFront,
             &Sphere2Cube::funcRight,
@@ -118,18 +118,18 @@ void Sphere2Cube::transform(const Image& img, Faces& ret) {
         };
 
     for (int lx = 0; lx < 6; lx++) {
-        prc[lx] = std::thread([this, lx, &img, &ret, &errs, &faceFuncVec]() {
+        prc[lx] = std::thread([this, lx, &img, &ret, &errs, &faceFuncs]() {
             try {
                 int height = img.height;
                 int width = img.width;
                 ret.faces[lx].create(tileSize_, tileSize_);
                 for (int tileY = 0; tileY < tileSize_; ++tileY) {
                     for (int tileX = 0; tileX < tileSize_; ++tileX) {
-                        auto [theta, phi] = (faceFuncVec[lx])(*this, tileY, tileX);
-                        int sp_x = clampIndex(phi2Width(width, phi), width);
-                        int sp_y = clampIndex(theta2Height(height, theta), height);
+                        auto [theta, phi] = (faceFuncs[lx])(*this, tileY, tileX);
+                        int x = clampIndex(phi2Width(width, phi), width);
+                        int y = clampIndex(theta2Height(height, theta), height);
                         memcpy(ret.faces[lx].at(tileY, tileX),
-                               img.at(sp_y, sp_x), Image::channels);
+                               img.at(y, x), Image::channels);
                     }
                 }
             } catch (...) {
@@ -149,52 +149,52 @@ void Sphere2Cube::transform(const Image& img, Faces& ret) {
     }
 }
 
-Sphere2Cube::vec2f Sphere2Cube::funcUp(int tileY, int tileX) {
-    float theta = cacheZp[tileY][tileX];
-    float phi = cachePhi[tileX][tileY];
+Sphere2Cube::Vec2f Sphere2Cube::funcUp(int tileY, int tileX) {
+    float theta = cacheZp_[tileY][tileX];
+    float phi = cachePhi_[tileX][tileY];
     phi = updatePhi(phi, halfSize_, tileY, tileX, pi, 0, -halfPI, halfPI);
-    return vec2f(theta, phi);
+    return Vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::funcFront(int tileY, int tileX) {
-    float theta = cacheXypm[tileSize_ - tileY - 1][tileSize_ - tileX - 1];
-    float phi = cachePhi[tileX][tileSize_ - 1];
+Sphere2Cube::Vec2f Sphere2Cube::funcFront(int tileY, int tileX) {
+    float theta = cacheXypm_[tileSize_ - tileY - 1][tileSize_ - tileX - 1];
+    float phi = cachePhi_[tileX][tileSize_ - 1];
     phi = updatePhi(phi, halfSize_, tileY, tileX, 0, 0, -halfPI, halfPI);
-    return vec2f(theta, phi);
+    return Vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::funcRight(int tileY, int tileX) {
+Sphere2Cube::Vec2f Sphere2Cube::funcRight(int tileY, int tileX) {
     auto [theta, phi] = funcFront(tileY, tileX);
     phi += halfPI;
     if (phi > doubPI) {
         phi -= doubPI;
     }
-    return vec2f(theta, phi);
+    return Vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::funcBack(int tileY, int tileX) {
+Sphere2Cube::Vec2f Sphere2Cube::funcBack(int tileY, int tileX) {
     auto [theta, phi] = funcFront(tileY, tileX);
     phi += 2 * halfPI;
     if (phi > doubPI) {
         phi -= doubPI;
     }
-    return vec2f(theta, phi);
+    return Vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::funcLeft(int tileY, int tileX) {
+Sphere2Cube::Vec2f Sphere2Cube::funcLeft(int tileY, int tileX) {
     auto [theta, phi] = funcFront(tileY, tileX);
     phi += 3 * halfPI;
     if (phi > doubPI) {
         phi -= doubPI;
     }
-    return vec2f(theta, phi);
+    return Vec2f(theta, phi);
 }
 
-Sphere2Cube::vec2f Sphere2Cube::funcDown(int tileY, int tileX) {
-    float theta = cacheZm[tileY][tileX];
-    float phi = cachePhi[tileX][tileSize_ - tileY - 1];
+Sphere2Cube::Vec2f Sphere2Cube::funcDown(int tileY, int tileX) {
+    float theta = cacheZm_[tileY][tileX];
+    float phi = cachePhi_[tileX][tileSize_ - tileY - 1];
     phi = updatePhi(phi, halfSize_, tileY, tileX, 0, pi, -halfPI, halfPI);
-    return vec2f(theta, phi);
+    return Vec2f(theta, phi);
 }
 
 
