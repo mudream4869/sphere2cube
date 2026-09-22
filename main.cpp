@@ -29,12 +29,19 @@ static int run(int argc, char** argv) {
     auto t1 = std::chrono::steady_clock::now();
     s2c.transform(image, cube);
     auto t2 = std::chrono::steady_clock::now();
+    auto delta = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
 
-    std::cout << "Cost "
-              << std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count()
-              << " s.\n";
+    std::cout << "Cost " << delta << " s.\n";
 
-    const char* names[6] = {"up.jpg", "front.jpg", "right.jpg", "back.jpg", "left.jpg", "down.jpg"};
+    const std::string names[6] = {
+        "up.jpg",
+        "front.jpg",
+        "right.jpg",
+        "back.jpg",
+        "left.jpg",
+        "down.jpg"
+    };
+
     for (int lx = 0; lx < 6; lx++) {
         if (!cube.faces[lx].saveJPG(names[lx])) {
             std::cerr << "Failed to write image: " << names[lx] << "\n";

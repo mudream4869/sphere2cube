@@ -21,11 +21,12 @@ void Image::create(int w, int h) {
     height = h;
 }
 
-bool Image::load(const char* filename) {
+bool Image::load(const std::string& filename) {
     int w, h, comp;
+
     // Force 3 channels, so gray/alpha inputs are handled too.
-    std::unique_ptr<unsigned char, void(*)(void*)> pixels(
-        stbi_load(filename, &w, &h, &comp, channels), stbi_image_free);
+    std::unique_ptr<unsigned char, void (*)(void *)> pixels(
+        stbi_load(filename.c_str(), &w, &h, &comp, channels), stbi_image_free);
     if (pixels == nullptr) {
         return false;
     }
@@ -40,13 +41,13 @@ bool Image::load(const char* filename) {
     return true;
 }
 
-bool Image::saveJPG(const char* filename, int quality) const {
+bool Image::saveJPG(const std::string& filename, int quality) const {
     if (data.empty()) {
         return false;
     }
 
     return stbi_write_jpg(
-        filename, width, height, channels, data.data(), quality) != 0;
+        filename.c_str(), width, height, channels, data.data(), quality) != 0;
 }
 
 

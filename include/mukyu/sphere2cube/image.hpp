@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include <cstddef>
 
 
@@ -18,8 +19,8 @@ struct Image {
 
     void create(int w, int h);
 
-    bool load(const char* filename);
-    bool saveJPG(const char* filename, int quality = 90) const;
+    bool load(const std::string& filename);
+    bool saveJPG(const std::string& filename, int quality = 90) const;
 
     unsigned char* at(int y, int x) {
         return &data[(static_cast<size_t>(y) * width + x) * channels];
