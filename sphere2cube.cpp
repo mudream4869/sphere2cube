@@ -68,7 +68,6 @@ void Sphere2Cube::transform(const Image& sphere_image, Faces& ret){
     std::thread prc[6];
     std::exception_ptr errs[6];
 
-    // 任何路徑都要 join：joinable 的 thread 被解構會直接 terminate。
     struct Joiner{
         std::thread* prc;
         ~Joiner(){
@@ -80,7 +79,6 @@ void Sphere2Cube::transform(const Image& sphere_image, Faces& ret){
 
     for(int lx = 0;lx < 6;lx++){
         prc[lx] = std::thread([this, lx, &sphere_image, &ret, &errs](){
-            // 例外不能逸出 thread 函式，先存起來交給主執行緒。
             try{
                 int sphere_height = sphere_image.height, sphere_width = sphere_image.width;
                 ret.faces[lx].create(tile_size, tile_size);

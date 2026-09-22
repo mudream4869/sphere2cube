@@ -38,7 +38,6 @@ static int run(int argc, char** argv){
 }
 
 int main(int argc, char** argv){
-    // 讓例外在這裡收斂，不要 uncaught 逃出 main。
     try{
         return run(argc, argv);
     }catch(const std::exception& e){
