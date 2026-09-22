@@ -21,7 +21,6 @@ void Image::create(int w, int h) {
 bool Image::load(const std::string& filename) {
     int w, h, comp;
 
-    // Force 3 channels, so gray/alpha inputs are handled too.
     std::unique_ptr<unsigned char, void (*)(void *)> pixels(
         stbi_load(filename.c_str(), &w, &h, &comp, channels), stbi_image_free);
     if (pixels == nullptr) {

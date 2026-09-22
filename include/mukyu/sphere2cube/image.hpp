@@ -9,7 +9,6 @@ namespace mukyu {
 namespace sphere2cube {
 
 
-// 8-bit RGB image, loaded/stored with stb_image / stb_image_write.
 struct Image {
     static const int channels = 3;
 
