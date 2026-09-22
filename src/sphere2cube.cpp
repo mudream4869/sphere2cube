@@ -1,12 +1,12 @@
 #include <mukyu/sphere2cube/sphere2cube.hpp>
 
-#include <cstring>
 #include <exception>
 #include <iostream>
 #include <thread>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <cstring>
 
 
 namespace {
