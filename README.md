@@ -6,8 +6,8 @@ Migrate from a [python version](https://github.com/flash286/sphere2cube).
 
 ## Requirement
 
-* A C++11 compiler
-* CMake 3.10+
+* A C++23 compiler
+* CMake 3.20+
 
 Image IO uses [stb_image / stb_image_write](https://github.com/nothings/stb),
 vendored in `third_party/stb`, so there is no external library to install.
