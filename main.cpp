@@ -1,19 +1,19 @@
 #include <chrono>
-#include <cstdio>
 #include <exception>
+#include <iostream>
 
 #include "image.h"
 #include "sphere2cube.h"
 
-static int run(int argc, char** argv){
-    if(argc < 2){
-        printf("Usage: %s [Panorama Filename]\n", argv[0]);
+static int run(int argc, char** argv) {
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " [Panorama Filename]\n";
         return 1;
     }
 
     Image image;
-    if(!image.load(argv[1])){
-        printf("Failed to load image: %s\n", argv[1]);
+    if (!image.load(argv[1])) {
+        std::cerr << "Failed to load image: " << argv[1] << "\n";
         return 1;
     }
 
@@ -24,12 +24,14 @@ static int run(int argc, char** argv){
     s2c.transform(image, cube);
     auto t2 = std::chrono::steady_clock::now();
 
-    printf("Cost %f s.\n", std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count());
+    std::cout << "Cost "
+              << std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count()
+              << " s.\n";
 
     const char* names[6] = {"up.jpg", "front.jpg", "right.jpg", "back.jpg", "left.jpg", "down.jpg"};
-    for(int lx = 0; lx < 6; lx++){
-        if(!cube.faces[lx].save_jpg(names[lx])){
-            printf("Failed to write image: %s\n", names[lx]);
+    for (int lx = 0; lx < 6; lx++) {
+        if (!cube.faces[lx].save_jpg(names[lx])) {
+            std::cerr << "Failed to write image: " << names[lx] << "\n";
             return 1;
         }
     }
@@ -37,14 +39,14 @@ static int run(int argc, char** argv){
     return 0;
 }
 
-int main(int argc, char** argv){
-    try{
+int main(int argc, char** argv) {
+    try {
         return run(argc, argv);
-    }catch(const std::exception& e){
-        printf("Error: %s\n", e.what());
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
         return 1;
-    }catch(...){
-        printf("Error: unknown exception\n");
+    } catch (...) {
+        std::cerr << "Error: unknown exception\n";
         return 1;
     }
 }
