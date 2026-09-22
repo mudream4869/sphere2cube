@@ -1,10 +1,11 @@
 #include <chrono>
 #include <cstdio>
+#include <exception>
 
 #include "image.h"
 #include "sphere2cube.h"
 
-int main(int argc, char** argv){
+static int run(int argc, char** argv){
     if(argc < 2){
         printf("Usage: %s [Panorama Filename]\n", argv[0]);
         return 1;
@@ -34,4 +35,16 @@ int main(int argc, char** argv){
     }
 
     return 0;
+}
+
+int main(int argc, char** argv){
+    try{
+        return run(argc, argv);
+    }catch(const std::exception& e){
+        printf("Error: %s\n", e.what());
+        return 1;
+    }catch(...){
+        printf("Error: unknown exception\n");
+        return 1;
+    }
 }
