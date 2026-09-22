@@ -1,8 +1,12 @@
-#ifndef IMAGE_HEADER
-#define IMAGE_HEADER
+#pragma once
 
-#include <cstddef>
 #include <vector>
+#include <cstddef>
+
+
+namespace mukyu {
+namespace sphere2cube {
+
 
 // 8-bit RGB image, loaded/stored with stb_image / stb_image_write.
 struct Image {
@@ -25,4 +29,6 @@ struct Image {
     }
 };
 
-#endif
+
+} // namespace sphere2cube
+} // namespace mukyu

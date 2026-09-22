@@ -2,8 +2,14 @@
 #include <exception>
 #include <iostream>
 
-#include "image.h"
-#include "sphere2cube.h"
+#include <mukyu/sphere2cube/image.hpp>
+#include <mukyu/sphere2cube/sphere2cube.hpp>
+
+
+using mukyu::sphere2cube::Faces;
+using mukyu::sphere2cube::Image;
+using mukyu::sphere2cube::Sphere2Cube;
+
 
 static int run(int argc, char** argv) {
     if (argc < 2) {

@@ -5,18 +5,17 @@
 #include <iostream>
 #include <thread>
 
-#include "sphere2cube.h"
+#include <mukyu/sphere2cube/sphere2cube.hpp>
+
 
 using std::tie;
 
-typedef std::pair<float, float> vec2f;
-typedef std::vector<float> VF;
-typedef std::vector<VF> VVF;
 
 const float pi = M_PI; 
 const float doub_pi = pi*2; 
 const float half_pi = pi/2.0;
 const float inv_pi = 1/pi;
+
 
 static int clamp_index(float v, int size) {
     int i = static_cast<int>(v);
@@ -28,6 +27,10 @@ static int clamp_index(float v, int size) {
     }
     return i;
 }
+
+namespace mukyu {
+namespace sphere2cube {
+
 
 Sphere2Cube::Sphere2Cube(int TILESIZE) {
 
@@ -69,7 +72,6 @@ Sphere2Cube::Sphere2Cube(int TILESIZE) {
 }
 
 void Sphere2Cube::transform(const Image& sphere_image, Faces& ret) {
-
     std::thread prc[6];
     std::exception_ptr errs[6];
 
@@ -119,7 +121,10 @@ void Sphere2Cube::transform(const Image& sphere_image, Faces& ret) {
     return;
 }
 
-float Sphere2Cube::update_phi(float phi, int major_dir, int minor_dir, float major_m, float major_p, float minor_m, float minor_p) const {
+float Sphere2Cube::update_phi(float phi,
+                              int major_dir, int minor_dir,
+                              float major_m, float major_p,
+                              float minor_m, float minor_p) const {
     if (major_dir < half_size) {
         return phi + major_m;
     } else if (major_dir > half_size) {
@@ -131,21 +136,21 @@ float Sphere2Cube::update_phi(float phi, int major_dir, int minor_dir, float maj
     }
 }
 
-vec2f Sphere2Cube::func_up(int tile_y, int tile_x) {
+Sphere2Cube::vec2f Sphere2Cube::func_up(int tile_y, int tile_x) {
     float theta = cache_zp[tile_y][tile_x];
     float phi = cache_phi[tile_x][tile_y];
     phi = update_phi(phi, tile_y, tile_x, pi, 0, -half_pi, half_pi);
     return vec2f(theta, phi);
 }
 
-vec2f Sphere2Cube::func_front(int tile_y, int tile_x) {
+Sphere2Cube::vec2f Sphere2Cube::func_front(int tile_y, int tile_x) {
     float theta = cache_xypm[tile_size - tile_y - 1][tile_size - tile_x - 1];
     float phi = cache_phi[tile_x][tile_size - 1];
     phi = update_phi(phi, tile_y, tile_x, 0, 0, -half_pi, half_pi);
     return vec2f(theta, phi);
 }
 
-vec2f Sphere2Cube::func_right(int tile_y, int tile_x) {
+Sphere2Cube::vec2f Sphere2Cube::func_right(int tile_y, int tile_x) {
     float theta, phi;
     tie(theta, phi) = func_front(tile_y, tile_x);
     phi += half_pi;
@@ -155,7 +160,7 @@ vec2f Sphere2Cube::func_right(int tile_y, int tile_x) {
     return vec2f(theta, phi);
 }
 
-vec2f Sphere2Cube::func_back(int tile_y, int tile_x) {
+Sphere2Cube::vec2f Sphere2Cube::func_back(int tile_y, int tile_x) {
     float theta, phi;
     tie(theta, phi) = func_front(tile_y, tile_x);
     phi += 2*half_pi;
@@ -165,9 +170,8 @@ vec2f Sphere2Cube::func_back(int tile_y, int tile_x) {
     return vec2f(theta, phi);
 }
 
-vec2f Sphere2Cube::func_left(int tile_y, int tile_x) {
-    float theta, phi;
-    tie(theta, phi) = func_front(tile_y, tile_x);
+Sphere2Cube::vec2f Sphere2Cube::func_left(int tile_y, int tile_x) {
+    auto [theta, phi] = func_front(tile_y, tile_x);
     phi += 3*half_pi;
     if (phi > doub_pi) {
         phi -= doub_pi;
@@ -175,7 +179,7 @@ vec2f Sphere2Cube::func_left(int tile_y, int tile_x) {
     return vec2f(theta, phi);
 }
 
-vec2f Sphere2Cube::func_down(int tile_y, int tile_x) {
+Sphere2Cube::vec2f Sphere2Cube::func_down(int tile_y, int tile_x) {
     float theta = cache_zm[tile_y][tile_x];
     float phi = cache_phi[tile_x][tile_size - tile_y - 1];
     phi = update_phi(phi, tile_y, tile_x, 0, pi, -half_pi, half_pi);
@@ -196,3 +200,7 @@ float Sphere2Cube::phi2width(int width, float phi) const {
 float Sphere2Cube::theta2height(int height, float theta) const {
     return height * theta * inv_pi;
 }
+
+
+} // namespace sphere2cube
+} // namespace mukyu

@@ -1,15 +1,20 @@
-#ifndef SPHERE2CUBE_HEADER
-#define SPHERE2CUBE_HEADER
+#pragma once
 
 #include <vector>
 #include <utility>
 #include <functional>
 
-#include "image.h"
+#include <mukyu/sphere2cube/image.hpp>
+
+
+namespace mukyu {
+namespace sphere2cube {
+
 
 struct Faces {
     Image faces[6];
 };
+
 
 class Sphere2Cube {
 public:
@@ -29,7 +34,10 @@ private:
 
     std::function<vec2f(Sphere2Cube&, int,int)> face_func[6];
 
-    float update_phi(float phi, int major_dir, int minor_dir, float major_m, float major_p, float minor_m, float minor_p) const;
+    float update_phi(float phi,
+                     int major_dir, int minor_dir,
+                     float major_m, float major_p,
+                     float minor_m, float minor_p) const;
 
     vec2f func_up(int tile_y, int tile_x);
     vec2f func_front(int tile_y, int tile_x);
@@ -42,4 +50,6 @@ private:
     float theta2height(int height, float theta) const;
 };
 
-#endif
+
+} // namespace sphere2cube
+} // namespace mukyu

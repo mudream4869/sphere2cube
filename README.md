@@ -7,29 +7,28 @@ Migrate from a [python version](https://github.com/flash286/sphere2cube).
 ## Requirement
 
 * A C++11 compiler
+* CMake 3.10+
 
 Image IO uses [stb_image / stb_image_write](https://github.com/nothings/stb),
 vendored in `third_party/stb`, so there is no external library to install.
 
-## Compiler and Run
+## Compile and Run
 
 ### Compile
 
 ```
-make
-```
-
-Or without `make`:
-
-```
-g++ -O2 -std=c++11 -pthread -Ithird_party/stb *.cpp -o main
+cmake -S . -B build
+cmake --build build
 ```
 
 ### Run
 
 ```
-./main [Panorama Filename]
+./build/main [Panorama Filename]
 ```
+
+For example, `./build/main sample/sample.png` writes the six faces
+(`front.jpg`, `back.jpg`, ...) to the current directory.
 
 ## Usage
 

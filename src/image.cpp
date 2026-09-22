@@ -1,4 +1,4 @@
-#include "image.h"
+#include <mukyu/sphere2cube/image.hpp>
 
 #include <memory>
 
@@ -7,6 +7,11 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+
+
+namespace mukyu {
+namespace sphere2cube {
+
 
 void Image::create(int w, int h) {
     std::vector<unsigned char> buf(static_cast<size_t>(w)*h*channels, 0);
@@ -36,5 +41,11 @@ bool Image::save_jpg(const char* filename, int quality) const {
     if (data.empty()) {
         return false;
     }
-    return stbi_write_jpg(filename, width, height, channels, data.data(), quality) != 0;
+
+    return stbi_write_jpg(
+        filename, width, height, channels, data.data(), quality) != 0;
 }
+
+
+} // namespace sphere2cube
+} // namespace mukyu
