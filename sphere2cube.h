@@ -7,11 +7,11 @@
 
 #include "image.h"
 
-struct Faces{
+struct Faces {
     Image faces[6];
 };
 
-class Sphere2Cube{
+class Sphere2Cube {
 public:
     Sphere2Cube(int TILESIZE);
 
